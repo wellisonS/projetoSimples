@@ -1,0 +1,245 @@
+#include <bits/stdc++.h>
+#include <pthread.h>
+#include <ncurses.h>
+using namespace std;
+int main()
+{
+    initscr();
+    noecho();
+    WINDOW *win = newwin(20, 30, 1, 1); // janela com a lista de músicas
+    refresh();
+    box(win, 0, 0);
+    wrefresh(win);
+    mvwprintw(win, 1, 1, "Lista de musicas:");
+    wrefresh(win);
+    keypad(win, true); // usar as setas do  teclado
+    string musicas[9] = {"musica1", "musica2", "musica3", "musica4", "musica5", "musica6", "musica7", "musica8", "musica9"};
+    int arrayGuarda[20];   // guarda a posicao das musicas do array de musicas
+    int arrayRemovido[20]; // guarda as linhas das musicas que foram removidas
+    int contador = 2;
+    int highlight = 1;
+    int highlight2 = 1;
+    int linha = 0;
+    int coluna = 0;
+    int catraca = 0;
+    int musicasRemovidas = 0;
+    WINDOW *win2 = newwin(20, 50, 1, 21); // janela com a lista de reprodução
+    refresh();
+    box(win2, 0, 0);
+    wrefresh(win2);
+    mvwprintw(win2, 1, 2, "Lista de Reprodução:");
+    wrefresh(win2);
+    keypad(win2, true); // usar as setas do  teclado
+    int musicasAdicionadas = 0;
+    WINDOW *win3 = newwin(4, 30, 21, 22); // janela do "player"
+    refresh();
+    box(win3, 0, 0);
+    wrefresh(win3);
+    while (true)
+    {
+        // esse for serve para dar highlight
+        for (int i = 0; i < 9; i++)
+        {
+
+            if (i == highlight - 1)
+
+                wattron(win, A_REVERSE);
+            mvwprintw(win, i + 2, 1, musicas[i].c_str());
+            wattroff(win, A_REVERSE);
+        }
+
+        int funcao = wgetch(win);
+        if (funcao == '-')
+        {
+            break;
+        }
+        else if (funcao == KEY_UP)
+        {
+            highlight--;
+            if (highlight == 0)
+            {
+                highlight = 1;
+            }
+        }
+        else if (funcao == KEY_DOWN)
+        {
+            highlight++;
+            if (highlight == 10)
+            {
+                highlight = 1;
+            }
+        }
+        else if (funcao == 'a') // adiciona musicas
+        {
+            if (catraca >= 1)
+            {
+                mvwprintw(win2, linha + 1, 1, musicas[highlight - 1].c_str());
+                wrefresh(win2);
+                catraca = 0;
+                arrayGuarda[contador] = highlight - 1;
+                contador++;
+            }
+            else
+            {
+                if (linha == 0)
+                {
+                    linha += 2;
+                    int y, x;
+                    getyx(win2, y, x); // salva as linhas e colunas atuais
+                    mvwprintw(win2, linha, 1, musicas[highlight - 1].c_str());
+                    wrefresh(win2);
+                    arrayGuarda[contador] = highlight - 1;
+                    contador++;
+                }
+                else
+                {
+                    int y, x;
+                    getyx(win2, y, x); // salva as linhas e colunas atuais
+                    mvwprintw(win2, linha + 1, 1, musicas[highlight - 1].c_str());
+                    wrefresh(win2);
+                    arrayGuarda[contador] = highlight - 1;
+                    contador++;
+                }
+            }
+
+            musicasAdicionadas++;
+            getyx(win2, linha, coluna);
+        }
+        else if (funcao == 'm')
+        {
+            wmove(win2, 2, 1);
+            while (true)
+            {
+                // esse for serve para dar highlight
+                for (int i = 0; i < musicasAdicionadas; i++)
+                {
+
+                    if (i == highlight2 - 1)
+
+                        wattron(win2, A_REVERSE);
+                    wmove(win2, highlight2 + 1, 1);
+                    wattroff(win2, A_REVERSE);
+                }
+
+                int funcao2 = wgetch(win2);
+                if (funcao2 == '-')
+                {
+                    wmove(win2, 1, 1);
+                    break;
+                }
+                else if (funcao2 == KEY_UP)
+                {
+                    highlight2--;
+                    if (highlight2 == 0)
+                    {
+                        highlight2 = 1;
+                    }
+                }
+                else if (funcao2 == KEY_DOWN)
+                {
+                    highlight2++;
+                    if (highlight2 == musicasAdicionadas + 1)
+                    {
+                        highlight2 = 1;
+                    }
+                }
+                else if (funcao2 == 'r') // aqui remove
+                {
+                    int y, x;
+                    getyx(win2, y, x); // salva as linhas e colunas iguais
+                    wclrtoeol(win2);   // limpa a linha
+                    box(win2, 0, 0);
+                    mvwprintw(win2, y, 1, "r"); // a gente alterou isso aqui
+                    wrefresh(win2);
+                    wmove(win2, linha, coluna);
+                    catraca++;
+                    arrayRemovido[musicasRemovidas] = y;
+                    musicasRemovidas++;
+                }
+                else if (funcao2 == 'g') // da play na musica
+                {
+                   
+                    wmove(win3, 2, 1);
+                    int aux = 0;
+                    int j = 0;
+                    getyx(win2, aux, j);            // salva a linha da musica que eu quero dar play
+                    int posicao = arrayGuarda[aux]; // guarda a posição da musica que eu quero dar play do array musica
+                    wprintw(win3, "%s está tocando!", musicas[posicao].c_str());
+                    wrefresh(win3);
+                }
+                else if (funcao2 == 'p') // da pause na musica
+                {
+
+                    wmove(win3, 2, 1);
+                    int aux = 0;
+                    int j = 0;
+                    getyx(win2, aux, j);            // salva a linha da musica que eu quero dar pause
+                    int posicao = arrayGuarda[aux]; // guarda a posição da musica que eu quero dar play do array musica
+                    wclrtoeol(win3);                // limpa a linha
+                    box(win3, 0, 0);
+                    wrefresh(win3);
+                    wprintw(win3, "%s está  pausada!", musicas[posicao].c_str());
+                    wrefresh(win3);
+                }
+                else if (funcao2 == 'n') // avança para próxima música
+                {
+
+                    wmove(win3, 2, 1);
+                    int aux = 0;
+                    int j = 0;
+                    getyx(win2, aux, j); // salva a linha atual e coluna atual
+                    int u = 0;
+                    for (int i = 0; i < 20; i++) 
+                        {
+                            if (arrayRemovido[i] == aux+1  )
+                            {
+                                wprintw(win3, "a música foi removida");
+                                wrefresh(win3);
+                                u = 1;
+                                break;
+                            }
+                        }
+                    if (aux - 1 == musicasAdicionadas && u == 0)
+                    {
+                        wprintw(win3, "Você tá na última música");
+                        wrefresh(win3);
+                    }
+                    
+
+                    else
+                    {
+                        if (u == 1){
+                            break;
+                        }
+                        else {
+                        int posicao = arrayGuarda[aux + 1]; // guarda a posição da musica que eu quero dar play do array musica
+                        wclrtoeol(win3); // limpa a linha
+                        box(win3, 0, 0);
+                        wrefresh(win3);
+                        wprintw(win3, "%s está tocando!", musicas[posicao].c_str());
+                        wrefresh(win3);
+                        }
+                       
+                    }
+                }
+            }
+        }
+    }
+
+    getch();
+    endwin();
+
+    return 0;
+}
+
+/*
+arrayRemovido[10] = {0,0,0,0,0,0,7,0,0,0}
+for (int i = 0 ; i < 10;i++)
+{
+    if (arrayRemovido[i] == posicao)
+    {
+        wprintw(win3,"a música foi removida");
+    }
+}
+
+*/
