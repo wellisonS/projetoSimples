@@ -1,0 +1,1 @@
+Uma boa ideia de projeto em javaScript é um jogo da velha, simples e legal, você pode explorar seus conhecimentos e se divertir. 
