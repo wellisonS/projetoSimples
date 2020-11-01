@@ -1,0 +1,1 @@
+projeto super simples, ele cria um contador para o seu site, que deve contar as vezes que você clica em um botão
